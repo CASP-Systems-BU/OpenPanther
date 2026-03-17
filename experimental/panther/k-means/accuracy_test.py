@@ -14,6 +14,8 @@ data_dir = current_dir + "/experimental/panther/dataset/"
 dataset = sys.argv[1]
 if dataset == "deep10M":
     file_name = "deep-image-96-angular.hdf5"
+elif dataset == "deep1m":
+    file_name = "deep1m-96-angular.hdf5"
 elif dataset == "sift":
     file_name = "sift-128-euclidean.hdf5"
 else:
@@ -24,6 +26,9 @@ data_h5py = h5py.File(file_path, "r")
 test_x = data_h5py['test'][:]
 train_x = data_h5py['train'][:]
 if dataset == "deep10M":
+    train_x = ((train_x + 1.0) * 127.5 + 0.5).astype(int)
+    test_x = ((test_x + 1.0) * 127.5 + 0.5).astype(int)
+if dataset == "deep1m":
     train_x = ((train_x + 1.0) * 127.5 + 0.5).astype(int)
     test_x = ((test_x + 1.0) * 127.5 + 0.5).astype(int)
 test_x = torch.from_numpy(test_x)
@@ -45,6 +50,10 @@ k = 10
 k
 if dataset == "deep10M":
     k_cluster = 186
+
+# the sum of the cluster numbers in the SANNS paper
+if dataset == "deep1m":
+    k_cluster = 116
 
 # deep1M
 if dataset == "sift":

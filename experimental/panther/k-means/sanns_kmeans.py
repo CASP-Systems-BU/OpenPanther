@@ -19,6 +19,8 @@ data_dir = current_dir + "/experimental/panther/dataset/"
 dataset = sys.argv[1]
 if dataset == "deep10M":
     file_name = "deep-image-96-angular.hdf5"
+elif dataset == "deep1m":
+    file_name = "deep1m-96-angular.hdf5"
 elif dataset == "sift":
     file_name = "sift-128-euclidean.hdf5"
 else:
@@ -30,7 +32,7 @@ train_x = data_h5py['train'][:]
 test_x = data_h5py['test'][:]
 
 # quantize to 8-bit int
-if dataset == "deep10M":
+if dataset in ("deep10M", "deep1m"):
     train_x = ((train_x + 1.0) * 127.5 + 0.5).astype(int)
     test_x = ((test_x + 1.0) * 127.5 + 0.5).astype(int)
 train_x = torch.from_numpy(train_x)
@@ -70,6 +72,19 @@ if dataset == "deep10M":
     frac = 0.56
     stash_size = 50649
     init_n_c = [209727, 107417, 39132, 14424, 5796, 2394]
+    init_ncentroids = int(init_n_c[0] * 1.1)
+    step = int(init_ncentroids * 0.1)
+# ==============================
+
+# ==============================
+# Clustering parameters for deep1m (parameters from SANNS)
+if dataset == "deep1m":
+    kmeans_niters = 5
+    max_points_per_cluster = 22
+    verbose = True
+    frac = 0.56
+    stash_size = 25150
+    init_n_c = [44830, 25867, 11795, 5607, 2611]
     init_ncentroids = int(init_n_c[0] * 1.1)
     step = int(init_ncentroids * 0.1)
 # ==============================

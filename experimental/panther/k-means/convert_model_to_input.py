@@ -14,6 +14,8 @@ data_dir = current_dir + "/experimental/panther/dataset/"
 dataset = sys.argv[1]
 if dataset == "deep10M":
     max_points_per_cluster = 40
+if dataset == "deep1m":
+    max_points_per_cluster = 22
 if dataset == "sift":
     max_points_per_cluster = 20 
 
@@ -26,6 +28,8 @@ centroids = model_dict['centroids']
 
 if dataset == "deep10M":
     file_name = "deep-image-96-angular.hdf5"
+elif dataset == "deep1m":
+    file_name = "deep1m-96-angular.hdf5"
 elif dataset == "sift":
     file_name = "sift-128-euclidean.hdf5"
 else:
@@ -36,6 +40,9 @@ data = h5py.File(file_path, "r")
 test_x = data['test'][:]
 train_x = data['train'][:]
 if dataset == "deep10M":
+    train_x = ((train_x + 1.0) * 127.5 + 0.5).astype(int)
+    test_x = ((test_x + 1.0) * 127.5 + 0.5).astype(int)
+if dataset == "deep1m":
     train_x = ((train_x + 1.0) * 127.5 + 0.5).astype(int)
     test_x = ((test_x + 1.0) * 127.5 + 0.5).astype(int)
 test_x = torch.from_numpy(test_x)
