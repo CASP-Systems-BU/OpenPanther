@@ -31,9 +31,9 @@ const size_t ele_size = (dims + 2 * message_size) * max_cluster_points;
 const uint32_t MASK = (1 << logt) - 1;
 
 // real input version
-auto test_data = read_data(1, dims, "dataset/deep1M_test.txt");
+auto test_data = read_data(1, dims, "dataset/deep1m_test.txt");
 // Only for check the correctness of result:
-auto neighbors = read_data(1, topk_k, "dataset/deep1M_neighbors.txt");
+auto neighbors = read_data(1, topk_k, "dataset/deep1m_neighbors.txt");
 
 llvm::cl::opt<std::string> Parties(
     "parties", llvm::cl::init("127.0.0.1:9530,127.0.0.1:9531"),

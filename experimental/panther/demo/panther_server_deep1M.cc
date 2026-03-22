@@ -32,10 +32,10 @@ const uint32_t MASK = (1 << logt) - 1;
 const uint32_t sum_k_c = 115860;
 const uint32_t total_cluster_size = 90710;
 
-auto cluster_data = read_data(sum_k_c, dims, "dataset/deep1M_centroids.txt");
-auto stash = read_data(k_c[k_c.size()-1], 1, "dataset/deep1M_stash.txt");
-auto ps = read_data(total_points_num, dims, "dataset/deep1M_dataset.txt");
-auto ptoc = read_data(total_cluster_size, max_cluster_points, "dataset/deep1M_ptoc.txt");
+auto cluster_data = read_data(sum_k_c, dims, "dataset/deep1m_centroids.txt");
+auto stash = read_data(k_c[k_c.size()-1], 1, "dataset/deep1m_stash.txt");
+auto ps = read_data(total_points_num, dims, "dataset/deep1m_dataset.txt");
+auto ptoc = read_data(total_cluster_size, max_cluster_points, "dataset/deep1m_ptoc.txt");
 
 llvm::cl::opt<std::string> Parties(
     "parties", llvm::cl::init("127.0.0.1:9530,127.0.0.1:9531"),
