@@ -17,8 +17,12 @@ const size_t N = 4096;
 const size_t dis_N = 2048;
 const size_t compare_radix = 5;
 const size_t max_cluster_points = 25;
-// k^i_c, last element is s
-const std::vector<int64_t> k_c = {41293, 24143, 9708, 3516, 1156, 8228};
+// k^i_c, last element is stash size (s).
+// NOTE: These constants are aligned to the current locally-generated
+// amazon.pth/amazon_*.txt artifacts (index=[42095, 23415, 9766, 3330, 1305]).
+// We keep 6 tiers to preserve existing protocol wiring; tier 5 is empty
+// (k_c[4] = 0) and tier 6 is stash (k_c[5] = 1305).
+const std::vector<int64_t> k_c = {42095, 23415, 9766, 3330, 0, 1305};
 const std::vector<int64_t> group_bin_number = {364, 364, 178, 84, 84, 84};
 const std::vector<int64_t> group_k_number = {37, 37, 22, 10, 7, 10};
 const size_t total_points_num = 1048576;
@@ -29,8 +33,10 @@ const size_t cluster_dc_bits = 4;
 const size_t message_size = 3;
 const size_t ele_size = (dims + 2 * message_size) * max_cluster_points;
 const uint32_t MASK = (1 << logt) - 1;
-const uint32_t sum_k_c = 88044;
-const uint32_t total_cluster_size = 79816;
+// Total centroids (non-stash clusters + stash) from current amazon.pth.
+const uint32_t sum_k_c = 79911;
+// Non-stash cluster rows expected in amazon_ptoc.txt.
+const uint32_t total_cluster_size = 78606;
 
 auto cluster_data = read_data(sum_k_c, dims, "dataset/amazon_centroids.txt");
 auto stash = read_data(k_c[k_c.size()-1], 1, "dataset/amazon_stash.txt");
