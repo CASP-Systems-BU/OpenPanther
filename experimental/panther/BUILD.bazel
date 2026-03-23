@@ -234,6 +234,40 @@ spu_cc_binary(
 )
 
 spu_cc_binary(
+    name = "panther_client_amazon",
+    srcs = ["demo/panther_client_amazon.cc"],
+    copts = AES_COPT_FLAGS,
+    data = [
+        "dataset/amazon_neighbors.txt",
+        "dataset/amazon_test.txt",
+    ],
+    deps = [
+        ":common",
+        "//libspu/mpc/cheetah/rlwe:lwe",
+        "//libspu/mpc/utils:simulate",
+        "@com_github_microsoft_seal//:seal",
+    ],
+)
+
+spu_cc_binary(
+    name = "panther_server_amazon",
+    srcs = ["demo/panther_server_amazon.cc"],
+    copts = AES_COPT_FLAGS,
+    data = [
+        "dataset/amazon_centroids.txt",
+        "dataset/amazon_dataset.txt",
+        "dataset/amazon_ptoc.txt",
+        "dataset/amazon_stash.txt",
+    ],
+    deps = [
+        ":common",
+        "//libspu/mpc/cheetah/rlwe:lwe",
+        "//libspu/mpc/utils:simulate",
+        "@com_github_microsoft_seal//:seal",
+    ],
+)
+
+spu_cc_binary(
     name = "random_panther_client",
     srcs = [
         "benchmark/random_panther_client.cc",
