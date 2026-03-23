@@ -23,6 +23,8 @@ elif dataset == "deep1m":
     file_name = "deep1m-96-angular.hdf5"
 elif dataset == "sift":
     file_name = "sift-128-euclidean.hdf5"
+elif dataset == "amazon":
+    file_name = "amazon-50-angular.hdf5"
 else:
     raise ValueError(f"Dataset '{dataset}' is not supported.")
 file_path = os.path.join(data_dir, file_name)
@@ -85,6 +87,19 @@ if dataset == "deep1m":
     frac = 0.56
     stash_size = 25150
     init_n_c = [44830, 25867, 11795, 5607, 2611]
+    init_ncentroids = int(init_n_c[0] * 1.1)
+    step = int(init_ncentroids * 0.1)
+# ==============================
+
+# ==============================
+# Clustering parameters for amazon
+if dataset == "amazon":
+    kmeans_niters = 5
+    max_points_per_cluster = 25
+    verbose = True
+    frac = 0.56
+    stash_size = 8228
+    init_n_c = [41293, 24143, 9708, 3516, 1156]
     init_ncentroids = int(init_n_c[0] * 1.1)
     step = int(init_ncentroids * 0.1)
 # ==============================
