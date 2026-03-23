@@ -34,7 +34,7 @@ train_x = data_h5py['train'][:]
 test_x = data_h5py['test'][:]
 
 # quantize to 8-bit int
-if dataset in ("deep10M", "deep1m"):
+if dataset in ("deep10M", "deep1m", "amazon"):
     train_x = ((train_x + 1.0) * 127.5 + 0.5).astype(int)
     test_x = ((test_x + 1.0) * 127.5 + 0.5).astype(int)
 train_x = torch.from_numpy(train_x)

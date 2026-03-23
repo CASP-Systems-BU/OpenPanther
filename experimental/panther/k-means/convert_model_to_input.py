@@ -18,6 +18,8 @@ if dataset == "deep1m":
     max_points_per_cluster = 22
 if dataset == "sift":
     max_points_per_cluster = 20 
+if dataset == "amazon":
+    max_points_per_cluster = 25
 
 model_dict = torch.load(data_dir+ dataset+".pth")
 ids = model_dict['ids']
@@ -32,6 +34,8 @@ elif dataset == "deep1m":
     file_name = "deep1m-96-angular.hdf5"
 elif dataset == "sift":
     file_name = "sift-128-euclidean.hdf5"
+elif dataset == "amazon":
+    file_name = "amazon-50-angular.hdf5"
 else:
     raise ValueError(f"Dataset '{dataset}' is not supported.")
 
@@ -43,6 +47,9 @@ if dataset == "deep10M":
     train_x = ((train_x + 1.0) * 127.5 + 0.5).astype(int)
     test_x = ((test_x + 1.0) * 127.5 + 0.5).astype(int)
 if dataset == "deep1m":
+    train_x = ((train_x + 1.0) * 127.5 + 0.5).astype(int)
+    test_x = ((test_x + 1.0) * 127.5 + 0.5).astype(int)
+if dataset == "amazon":
     train_x = ((train_x + 1.0) * 127.5 + 0.5).astype(int)
     test_x = ((test_x + 1.0) * 127.5 + 0.5).astype(int)
 test_x = torch.from_numpy(test_x)
@@ -63,6 +70,7 @@ np.savetxt(data_dir+dataset+"_neighbors.txt",neighbors,fmt = "%d", delimiter= " 
 
 """ Maps cluster IDs to point IDs """
 def save_ptoc(cluster_number, max_points_per_cluster, save):
+    cluster_number = int(cluster_number)
     result = torch.empty((cluster_number, max_points_per_cluster))
     result.fill_(111111111)
     p_ids = ids.reshape(-1).type(torch.int)
@@ -70,11 +78,15 @@ def save_ptoc(cluster_number, max_points_per_cluster, save):
     order = torch.argsort(c_ids)
     p_ids = p_ids[order]
     c_ids = c_ids[order] 
-    counts = torch.bincount(c_ids)
+    # Use minlength to keep split_p_ids aligned with result's row count.
+    counts = torch.bincount(c_ids, minlength=cluster_number)
     split_p_ids = torch.split(p_ids,counts.tolist(),dim=0)
     for i in range(cluster_number):
         cluster_points = split_p_ids[i]
-        result[i, :len(cluster_points)] = cluster_points
+        # Ptoc has a fixed width. If a cluster is (unexpectedly) larger,
+        # truncate to avoid shape mismatch and keep remaining slots padded.
+        n = min(len(cluster_points), max_points_per_cluster)
+        result[i, :n] = cluster_points[:n]
     if save == True:
         np.savetxt(data_dir+dataset+"_ptoc.txt",result,fmt="%d",delimiter=" ")
     return result

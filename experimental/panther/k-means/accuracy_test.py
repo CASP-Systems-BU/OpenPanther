@@ -18,6 +18,8 @@ elif dataset == "deep1m":
     file_name = "deep1m-96-angular.hdf5"
 elif dataset == "sift":
     file_name = "sift-128-euclidean.hdf5"
+elif dataset == "amazon":
+    file_name = "amazon-50-angular.hdf5"
 else:
     raise ValueError(f"Dataset '{dataset}' is not supported.")
 
@@ -29,6 +31,9 @@ if dataset == "deep10M":
     train_x = ((train_x + 1.0) * 127.5 + 0.5).astype(int)
     test_x = ((test_x + 1.0) * 127.5 + 0.5).astype(int)
 if dataset == "deep1m":
+    train_x = ((train_x + 1.0) * 127.5 + 0.5).astype(int)
+    test_x = ((test_x + 1.0) * 127.5 + 0.5).astype(int)
+if dataset == "amazon":
     train_x = ((train_x + 1.0) * 127.5 + 0.5).astype(int)
     test_x = ((test_x + 1.0) * 127.5 + 0.5).astype(int)
 test_x = torch.from_numpy(test_x)
@@ -58,6 +63,10 @@ if dataset == "deep1m":
 # deep1M
 if dataset == "sift":
     k_cluster = 123
+
+# amazon
+if dataset == "amazon":
+    k_cluster = 113
 
 print(model_dict['index']) 
 all_cluster = centroids.shape[0]
