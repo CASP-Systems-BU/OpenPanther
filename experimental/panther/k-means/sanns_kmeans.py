@@ -37,6 +37,11 @@ test_x = data_h5py['test'][:]
 if dataset in ("deep10M", "deep1m", "amazon"):
     train_x = ((train_x + 1.0) * 127.5 + 0.5).astype(int)
     test_x = ((test_x + 1.0) * 127.5 + 0.5).astype(int)
+# Amazon only: clip quantized coords to [0,255] so convert_model_to_input.py
+# and BFV/SEAL use the same range (avoids negative plaintext; match convert).
+if dataset == "amazon":
+    train_x = np.clip(train_x, 0, 255)
+    test_x = np.clip(test_x, 0, 255)
 train_x = torch.from_numpy(train_x)
 test_x = torch.from_numpy(test_x)
 

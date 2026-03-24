@@ -26,6 +26,12 @@ ids = model_dict['ids']
 cluster_ids = model_dict['cluster_idx']
 index = model_dict['index']
 centroids = model_dict['centroids']
+if dataset == "amazon":
+    # BFV encrypts query coordinates as plaintext coeffs; negatives (or invalid
+    # values) throw "plain is not valid for encryption parameters". After the
+    # same quant as sanns_kmeans.py, clip to [0,255] (8-bit). Match sanns
+    # (amazon-only clip there) before retraining for full consistency.
+    centroids = torch.clamp(centroids, 0, 255)
 
 
 if dataset == "deep10M":
@@ -47,8 +53,13 @@ if dataset == "deep10M":
     train_x = ((train_x + 1.0) * 127.5 + 0.5).astype(int)
     test_x = ((test_x + 1.0) * 127.5 + 0.5).astype(int)
 if dataset == "amazon":
+    # Same float->int quant as sanns_kmeans.py (no [-1,1] float clamp).
     train_x = ((train_x + 1.0) * 127.5 + 0.5).astype(int)
     test_x = ((test_x + 1.0) * 127.5 + 0.5).astype(int)
+    # Integer clip only: keeps BFV plaintext valid; does not remap the whole
+    # embedding like a float clamp (only affects out-of-[0,255] outliers).
+    train_x = np.clip(train_x, 0, 255)
+    test_x = np.clip(test_x, 0, 255)
 if dataset == "deep1m":
     train_x = ((train_x + 1.0) * 127.5 + 0.5).astype(int)
     test_x = ((test_x + 1.0) * 127.5 + 0.5).astype(int)
@@ -68,7 +79,7 @@ D,res = searchs.search(test_x, 10)
 neighbors = torch.from_numpy(res)
 np.savetxt(data_dir+dataset+"_neighbors.txt",neighbors,fmt = "%d", delimiter= " ")
 
-""" Maps cluster IDs to point IDs """
+""" Maps cluster IDs to point IDs (non-Amazon: unchanged legacy behavior). """
 def save_ptoc(cluster_number, max_points_per_cluster, save):
     result = torch.empty((cluster_number, max_points_per_cluster))
     result.fill_(111111111)
@@ -77,8 +88,7 @@ def save_ptoc(cluster_number, max_points_per_cluster, save):
     order = torch.argsort(c_ids)
     p_ids = p_ids[order]
     c_ids = c_ids[order]
-    # minlength: one row per cluster even if empty; avoids split length mismatch
-    counts = torch.bincount(c_ids, minlength=cluster_number)
+    counts = torch.bincount(c_ids)
     split_p_ids = torch.split(p_ids, counts.tolist(), dim=0)
     truncated = 0
     for i in range(cluster_number):
@@ -94,15 +104,56 @@ def save_ptoc(cluster_number, max_points_per_cluster, save):
             flush=True,
         )
     if save == True:
-        np.savetxt(data_dir+dataset+"_ptoc.txt",result,fmt="%d",delimiter=" ")
+        np.savetxt(data_dir+dataset+"_ptoc.txt", result, fmt="%d", delimiter=" ")
     return result
+
+
+def save_ptoc_amazon(cluster_number, max_points_per_cluster, save):
+    """Amazon-only: padding 111111112 matches common.cc PirData; centroid trim when >25."""
+    result = torch.empty((cluster_number, max_points_per_cluster))
+    result.fill_(111111112)
+    p_ids = ids.reshape(-1).type(torch.int)
+    c_ids = cluster_ids.reshape(-1).type(torch.int)
+    order = torch.argsort(c_ids)
+    p_ids = p_ids[order]
+    c_ids = c_ids[order]
+    counts = torch.bincount(c_ids, minlength=cluster_number)
+    split_p_ids = torch.split(p_ids, counts.tolist(), dim=0)
+    truncated = 0
+    for i in range(cluster_number):
+        cluster_points = split_p_ids[i]
+        if len(cluster_points) == 0:
+            continue
+        if len(cluster_points) <= max_points_per_cluster:
+            result[i, : len(cluster_points)] = cluster_points
+            continue
+        truncated += 1
+        c = centroids[i].to(dtype=torch.float32)
+        idx_long = cluster_points.long()
+        pts = train_x[idx_long].to(dtype=torch.float32)
+        d2 = (pts - c.unsqueeze(0)).pow(2).sum(dim=1)
+        _, pick = torch.topk(d2, max_points_per_cluster, largest=False)
+        result[i, :] = cluster_points[pick]
+    if truncated:
+        print(
+            f"WARNING: {truncated} clusters had more than {max_points_per_cluster} points; "
+            "ptoc truncated to fixed width (amazon: kept points nearest to each cluster centroid).",
+            flush=True,
+        )
+    if save == True:
+        np.savetxt(data_dir + dataset + "_ptoc.txt", result, fmt="%d", delimiter=" ")
+    return result
+
 
 all_cluster = centroids.shape[0]
 num_cluters = sum(index) - index[-1]
 stash_size = index[-1]
-print("Total:",all_cluster)
-print("Num cluster:", num_cluters," Stash size:", stash_size)
-ptoc = save_ptoc(num_cluters,max_points_per_cluster,True)
+print("Total:", all_cluster)
+print("Num cluster:", num_cluters, " Stash size:", stash_size)
+if dataset == "amazon":
+    ptoc = save_ptoc_amazon(num_cluters, max_points_per_cluster, True)
+else:
+    ptoc = save_ptoc(num_cluters, max_points_per_cluster, True)
 
 # Save Stash
 _, stash_id = searchs.search(centroids[num_cluters:],1)
