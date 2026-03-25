@@ -204,10 +204,15 @@ std::vector<size_t> GcTopkCluster(spu::NdArrayRef& value,
 spu::seal_pir::MultiQueryClient PrepareMpirClient(
     size_t batch_number, uint32_t ele_number, uint32_t ele_size,
     std::shared_ptr<yacl::link::Context>& lctx, size_t N, size_t logt) {
-  double factor = 1.5;
+  // Cuckoo used in MPIR batch routing: num_bins ≈ batch_number * factor.
+  // factor=1.5 with num_stash=0 often fails after Insert evictions (PutToStash
+  // throws when stash is full); AES-derived query hashes vary per run.
+  const double factor = 2.5;
+  const uint64_t cuckoo_stash = 32;
+  const uint64_t max_try = 256;
   size_t hash_num = 3;
-  spu::psi::CuckooIndex::Options cuckoo_params{batch_number, 0, hash_num,
-                                               factor};
+  spu::psi::CuckooIndex::Options cuckoo_params{
+      batch_number, cuckoo_stash, hash_num, factor, max_try};
   // cuckoo hash parms
   spu::psi::SodiumCurve25519Cryptor c25519_cryptor;
 
@@ -282,10 +287,12 @@ spu::seal_pir::MultiQueryServer PrepareMpirServer(
     size_t batch_number, size_t ele_number, size_t ele_size,
     std::shared_ptr<yacl::link::Context>& lctx, size_t N, size_t logt,
     std::vector<uint8_t>& encoded_db) {
-  double factor = 1.5;
+  const double factor = 2.5;
+  const uint64_t cuckoo_stash = 32;
+  const uint64_t max_try = 256;
   size_t hash_num = 3;
-  spu::psi::CuckooIndex::Options cuckoo_params{batch_number, 0, hash_num,
-                                               factor};
+  spu::psi::CuckooIndex::Options cuckoo_params{
+      batch_number, cuckoo_stash, hash_num, factor, max_try};
 
   spu::psi::SodiumCurve25519Cryptor c25519_cryptor;
 
